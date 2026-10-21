@@ -6,7 +6,10 @@
 
 <div class="page-head">
     <h1>Line overview</h1>
-    <p class="muted">@Summary</p>
+    @if (Feed.Loaded)
+    {
+        <p class="muted">@Summary</p>
+    }
 </div>
 
 @if (!Feed.Loaded)

@@ -27,6 +27,8 @@ html, body {
 
 a { color: var(--accent); text-decoration: none; }
 h1 { font-size: 1.6rem; margin: 0; }
+/* Blazor moves focus to the page heading after navigation for screen readers; no need to draw it. */
+h1:focus { outline: none; }
 h2 { font-size: 1rem; margin: 0 0 .75rem; }
 .muted { color: var(--muted); font-size: .9em; }
 
@@ -170,14 +172,30 @@ section.card + section.card { margin-top: 1rem; }
 
 /* Charts */
 
-.trend { display: block; width: 100%; height: auto; }
-.trend--compact { margin-top: .5rem; height: 56px; }
+.trend {
+    display: grid;
+    grid-template-columns: 2.75rem 1fr;
+    grid-template-rows: 240px auto;
+    column-gap: .6rem;
+}
+
+.trend--compact { display: block; height: 56px; margin-top: .5rem; }
+
+.trend__plot { position: relative; height: 100%; }
+.trend__plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
 .trend__line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.trend__grid { stroke: var(--line); stroke-width: 1; }
-.trend__axis { fill: var(--muted); font-size: 11px; }
+.trend__grid { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .trend__limit { stroke: var(--fault); stroke-width: 1.2; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
-.trend__limit-label { fill: var(--fault); font-size: 11px; }
-.trend__empty { fill: var(--muted); font-size: 13px; }
+
+.trend__y-axis { position: relative; }
+.trend__y-axis span { position: absolute; right: 0; transform: translateY(-50%); }
+.trend__y-axis, .trend__x-axis { color: var(--muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.trend__x-axis { grid-column: 2; display: flex; justify-content: space-between; padding-top: .3rem; }
+
+.trend__limit-label { position: absolute; right: .25rem; transform: translateY(-125%); color: var(--fault); font-size: .75rem; }
+.trend__limit-label.is-below { transform: translateY(25%); }
+.trend__empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: .9rem; }
 
 /* Alarms */
 
@@ -211,6 +229,7 @@ section.card + section.card { margin-top: 1rem; }
     .topbar { flex-wrap: wrap; gap: .75rem; padding: .7rem 1rem; }
     .content { padding: 1rem; }
     .page-head--row { flex-direction: column; }
+    .trend { grid-template-rows: 170px auto; grid-template-columns: 2.25rem 1fr; }
     .alarms { font-size: .9rem; }
     .alarms td, .alarms th { padding: .5rem .4rem; }
     .alarms__action { width: auto; }

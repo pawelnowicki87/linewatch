@@ -1,43 +1,59 @@
-@* Hand-rolled SVG line chart: enough for one series with a limit line, no chart library needed. *@
+@*
+    Line chart for one series with an optional limit. The plot is an SVG stretched to whatever box it gets
+    (preserveAspectRatio="none"), and the labels are plain HTML positioned in percent, so text never
+    scales with the chart and the same component works on a phone and on a wall screen.
+*@
 
-<svg class="trend @(Compact ? "trend--compact" : "")" viewBox="0 0 @Width @Height" role="img" aria-label="@Label">
-    @* SVG <text> has to sit inside <g>: on its own in a code block Razor reads it as its own <text> tag. *@
+<div class="trend @(Compact ? "trend--compact" : "")" role="img" aria-label="@Label">
     @if (!Compact)
     {
-        <g class="trend__axes">
+        <div class="trend__y-axis" aria-hidden="true">
             @foreach (var tick in _ticks)
             {
-                <line class="trend__grid" x1="@F(PadLeft)" x2="@F(Width - PadRight)" y1="@F(Y(tick))" y2="@F(Y(tick))" />
+                <span style="top: @Pct(Y(tick))%">@tick.ToString(TickFormat, CultureInfo.InvariantCulture)</span>
             }
-            @foreach (var tick in _ticks)
-            {
-                <g><text class="trend__axis" x="@F(PadLeft - 6)" y="@F(Y(tick) + 4)" text-anchor="end">@tick.ToString(TickFormat, CultureInfo.InvariantCulture)</text></g>
-            }
-            <text class="trend__axis" x="@F(PadLeft)" y="@F(Height - 4)">@_start.ToLocalTime().ToString("HH:mm")</text>
-            <text class="trend__axis" x="@F(Width - PadRight)" y="@F(Height - 4)" text-anchor="end">@_end.ToLocalTime().ToString("HH:mm:ss")</text>
-        </g>
+        </div>
     }
 
-    @if (Limit is { } limit)
-    {
-        <g class="trend__limit-group">
-            <line class="trend__limit" x1="@F(PadLeft)" x2="@F(Width - PadRight)" y1="@F(Y(limit))" y2="@F(Y(limit))" />
+    <div class="trend__plot">
+        <svg viewBox="0 0 @Size @Size" preserveAspectRatio="none" aria-hidden="true">
             @if (!Compact)
             {
-                <g><text class="trend__limit-label" x="@F(Width - PadRight - 4)" y="@F(Y(limit) - 5)" text-anchor="end">limit @limit.ToString(TickFormat, CultureInfo.InvariantCulture) @Unit</text></g>
+                @foreach (var tick in _ticks)
+                {
+                    <line class="trend__grid" x1="0" x2="@Size" y1="@F(Y(tick))" y2="@F(Y(tick))" />
+                }
             }
-        </g>
-    }
+            @if (Limit is { } limit)
+            {
+                <line class="trend__limit" x1="0" x2="@Size" y1="@F(Y(limit))" y2="@F(Y(limit))" />
+            }
+            @if (_path.Length > 0)
+            {
+                <path class="trend__line" d="@_path" />
+            }
+        </svg>
 
-    @if (_path.Length > 0)
+        @if (!Compact && Limit is { } shownLimit)
+        {
+            <span class="trend__limit-label @(Y(shownLimit) < Size * 0.12 ? "is-below" : null)" style="top: @Pct(Y(shownLimit))%">
+                limit @shownLimit.ToString(TickFormat, CultureInfo.InvariantCulture) @Unit
+            </span>
+        }
+        @if (!Compact && _path.Length == 0)
+        {
+            <span class="trend__empty">Waiting for data…</span>
+        }
+    </div>
+
+    @if (!Compact)
     {
-        <path class="trend__line" d="@_path" />
+        <div class="trend__x-axis" aria-hidden="true">
+            <span>@_start.ToLocalTime().ToString("HH:mm")</span>
+            <span>@_end.ToLocalTime().ToString("HH:mm:ss")</span>
+        </div>
     }
-    else if (!Compact)
-    {
-        <g><text class="trend__empty" x="@F(Width / 2)" y="@F(Height / 2)" text-anchor="middle">Waiting for data…</text></g>
-    }
-</svg>
+</div>
 
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<(DateTimeOffset At, double Value)> Points { get; set; } = [];
@@ -48,15 +64,12 @@
     [Parameter] public string TickFormat { get; set; } = "0";
     [Parameter] public bool Compact { get; set; }
 
+    private const double Size = 1000;
+    // Keeps the line off the very top and bottom edge, where half of its stroke would be cut off.
+    private const double Inset = 20;
+
     // A gap longer than this means the machine was offline; the line breaks instead of bridging it.
     private static readonly TimeSpan MaxGap = TimeSpan.FromSeconds(5);
-
-    private double Width => Compact ? 240 : 640;
-    private double Height => Compact ? 56 : 200;
-    private double PadLeft => Compact ? 2 : 44;
-    private double PadRight => Compact ? 2 : 8;
-    private double PadTop => Compact ? 4 : 12;
-    private double PadBottom => Compact ? 4 : 22;
 
     private DateTimeOffset _start;
     private DateTimeOffset _end;
@@ -115,11 +128,11 @@
         return path.ToString().TrimEnd();
     }
 
-    private double X(DateTimeOffset at) =>
-        PadLeft + (at - _start) / Window * (Width - PadLeft - PadRight);
+    private double X(DateTimeOffset at) => (at - _start) / Window * Size;
 
-    private double Y(double value) =>
-        PadTop + (1 - (value - _min) / (_max - _min)) * (Height - PadTop - PadBottom);
+    private double Y(double value) => Inset + (1 - (value - _min) / (_max - _min)) * (Size - 2 * Inset);
+
+    private static string Pct(double y) => (y / Size * 100).ToString("0.##", CultureInfo.InvariantCulture);
 
     private static string F(double value) => value.ToString("0.#", CultureInfo.InvariantCulture);
 }

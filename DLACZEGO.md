@@ -68,6 +68,8 @@ Cztery odczyty i ewentualne zmiany alarmów z jednego cyklu idą jednym `SaveCha
 
 Wyjątek w cyklu (np. chwilowy brak bazy) jest łapany i logowany. Tracimy jedną próbkę, ale kolektor działa dalej. Domyślnie nieobsłużony wyjątek w `BackgroundService` zatrzymuje całą aplikację.
 
+Uczciwie: jeśli w tym samym cyklu zaczął się alarm, przepada też jego początek. Tracker już o nim wie, więc nie zgłosi go drugi raz, a w bazie wpisu nie ma. Poprawka na później: przy nieudanym zapisie przywrócić stan trackera sprzed cyklu albo trzymać niezapisane zmiany i dołączyć je do następnego zapisu.
+
 ## Dlaczego odczyty są kasowane po 24 godzinach
 
 Jedna maszyna co sekundę to 86 400 wierszy na dobę. Dashboard patrzy najwyżej godzinę wstecz. `ReadingRetention` co 10 minut kasuje starsze odczyty jednym `ExecuteDeleteAsync`, czyli jednym `DELETE ... WHERE` w SQL, bez wczytywania wierszy do pamięci. Alarmy zostają, bo jest ich mało, a są historią zdarzeń.

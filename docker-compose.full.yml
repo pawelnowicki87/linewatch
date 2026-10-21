@@ -1,0 +1,62 @@
+# The whole stack in containers: docker compose -f docker-compose.full.yml up --build -d
+# Dashboard: http://localhost:5081, API: http://localhost:5080, Modbus simulator: localhost:5020
+services:
+  postgres:
+    image: postgres:17
+    container_name: linewatch-postgres
+    environment:
+      POSTGRES_USER: linewatch
+      POSTGRES_PASSWORD: linewatch
+      POSTGRES_DB: linewatch
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linewatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  simulator:
+    build:
+      context: .
+      dockerfile: src/LineWatch.Simulator/Dockerfile
+    container_name: linewatch-simulator
+    ports:
+      - "5020:5020"
+
+  api:
+    build:
+      context: .
+      dockerfile: src/LineWatch.Api/Dockerfile
+    container_name: linewatch-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      simulator:
+        condition: service_started
+    environment:
+      ConnectionStrings__LineWatch: "Host=postgres;Port=5432;Database=linewatch;Username=linewatch;Password=linewatch"
+      Cors__AllowedOrigins__0: "http://localhost:5081"
+      Collector__Machines__0__Host: simulator
+      Collector__Machines__1__Host: simulator
+      Collector__Machines__2__Host: simulator
+      Collector__Machines__3__Host: simulator
+    ports:
+      - "5080:8080"
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: src/LineWatch.Dashboard/Dockerfile
+    container_name: linewatch-dashboard
+    depends_on:
+      - api
+    environment:
+      API_BASE_URL: "http://localhost:5080"
+    ports:
+      - "5081:80"
+
+volumes:
+  postgres-data:

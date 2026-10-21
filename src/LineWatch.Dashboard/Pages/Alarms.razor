@@ -1,0 +1,42 @@
+@page "/alarms"
+@implements IDisposable
+@inject TelemetryFeed Feed
+
+<PageTitle>Alarms | LineWatch</PageTitle>
+
+<div class="page-head page-head--row">
+    <div>
+        <h1>Alarms</h1>
+        <p class="muted">@Feed.OpenUnacknowledged open and not acknowledged</p>
+    </div>
+    <div class="segmented" role="group" aria-label="Which alarms to show">
+        <button class="@(_openOnly ? "is-active" : null)" @onclick="ShowOpen">Open</button>
+        <button class="@(_openOnly ? null : "is-active")" @onclick="ShowAll">All recent</button>
+    </div>
+</div>
+
+<section class="card">
+    <AlarmTable Alarms="Visible" ShowMachine="true" />
+</section>
+
+@code {
+    private bool _openOnly = true;
+
+    private IReadOnlyList<AlarmInfo> Visible => _openOnly
+        ? Feed.Alarms.Where(a => a.ClearedAt is null).ToList()
+        : Feed.Alarms;
+
+    private void ShowOpen() => _openOnly = true;
+
+    private void ShowAll() => _openOnly = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Feed.Changed += OnFeedChanged;
+        await Feed.StartAsync();
+    }
+
+    private void OnFeedChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+}

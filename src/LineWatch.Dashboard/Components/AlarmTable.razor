@@ -1,0 +1,84 @@
+@inject LineWatchApi Api
+@inject TelemetryFeed Feed
+
+@if (Alarms.Count == 0)
+{
+    <p class="muted">No alarms.</p>
+}
+else
+{
+    <table class="alarms">
+        <thead>
+            <tr>
+                @if (ShowMachine)
+                {
+                    <th>Machine</th>
+                }
+                <th>Alarm</th>
+                <th>Raised</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var alarm in Alarms)
+            {
+                <tr class="@(alarm.ClearedAt is null ? "is-open" : null)">
+                    @if (ShowMachine)
+                    {
+                        <td><a href="machines/@alarm.MachineId">@(Feed.Machine(alarm.MachineId)?.Name ?? alarm.MachineId)</a></td>
+                    }
+                    <td>
+                        <strong>@Display.Describe(alarm.Kind)</strong>
+                        <div class="muted">@alarm.Message</div>
+                    </td>
+                    <td>@Display.Time(alarm.RaisedAt)</td>
+                    <td>@Display.Duration((alarm.ClearedAt ?? DateTimeOffset.UtcNow) - alarm.RaisedAt)</td>
+                    <td>
+                        @if (alarm.ClearedAt is { } cleared)
+                        {
+                            <span>Cleared @Display.Time(cleared)</span>
+                        }
+                        else
+                        {
+                            <span class="status-open">Open</span>
+                        }
+                        @if (alarm.AcknowledgedAt is { } acknowledged)
+                        {
+                            <div class="muted">acknowledged @Display.Time(acknowledged)</div>
+                        }
+                    </td>
+                    <td class="alarms__action">
+                        @if (alarm.AcknowledgedAt is null)
+                        {
+                            <button class="button" disabled="@_pending.Contains(alarm.Id)" @onclick="() => AcknowledgeAsync(alarm)">Acknowledge</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AlarmInfo> Alarms { get; set; } = [];
+    [Parameter] public bool ShowMachine { get; set; } = true;
+
+    private readonly HashSet<long> _pending = [];
+
+    private async Task AcknowledgeAsync(AlarmInfo alarm)
+    {
+        _pending.Add(alarm.Id);
+        try
+        {
+            // The hub broadcasts the change as well; applying it here makes the click feel instant.
+            if (await Api.AcknowledgeAsync(alarm.Id) is { } updated)
+                Feed.Apply(updated);
+        }
+        finally
+        {
+            _pending.Remove(alarm.Id);
+        }
+    }
+}

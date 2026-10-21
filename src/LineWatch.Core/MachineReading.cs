@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace LineWatch.Core;
 
+[JsonConverter(typeof(JsonStringEnumConverter<MachineState>))]
 public enum MachineState
 {
     Idle = 0,

@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace LineWatch.Core;
 
+[JsonConverter(typeof(JsonStringEnumConverter<AlarmKind>))]
 public enum AlarmKind
 {
     HighTemperature,

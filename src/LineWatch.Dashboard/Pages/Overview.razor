@@ -30,7 +30,8 @@ else
         {
             var machines = Feed.Machines;
             var running = machines.Count(m => m.Online && m.Latest?.State == MachineState.Running);
-            return $"{running} of {machines.Count} machines running, {Feed.OpenUnacknowledged} unacknowledged alarms";
+            var alarms = Feed.OpenUnacknowledged;
+            return $"{running} of {machines.Count} machines running, {alarms} unacknowledged {(alarms == 1 ? "alarm" : "alarms")}";
         }
     }
 

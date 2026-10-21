@@ -7,58 +7,60 @@
 }
 else
 {
-    <table class="alarms">
-        <thead>
-            <tr>
-                @if (ShowMachine)
-                {
-                    <th>Machine</th>
-                }
-                <th>Alarm</th>
-                <th>Raised</th>
-                <th>Duration</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var alarm in Alarms)
-            {
-                <tr class="@(alarm.ClearedAt is null ? "is-open" : null)">
+    <div class="table-scroll">
+        <table class="alarms">
+            <thead>
+                <tr>
                     @if (ShowMachine)
                     {
-                        <td><a href="machines/@alarm.MachineId">@(Feed.Machine(alarm.MachineId)?.Name ?? alarm.MachineId)</a></td>
+                        <th>Machine</th>
                     }
-                    <td>
-                        <strong>@Display.Describe(alarm.Kind)</strong>
-                        <div class="muted">@alarm.Message</div>
-                    </td>
-                    <td>@Display.Time(alarm.RaisedAt)</td>
-                    <td>@Display.Duration((alarm.ClearedAt ?? DateTimeOffset.UtcNow) - alarm.RaisedAt)</td>
-                    <td>
-                        @if (alarm.ClearedAt is { } cleared)
-                        {
-                            <span>Cleared @Display.Time(cleared)</span>
-                        }
-                        else
-                        {
-                            <span class="status-open">Open</span>
-                        }
-                        @if (alarm.AcknowledgedAt is { } acknowledged)
-                        {
-                            <div class="muted">acknowledged @Display.Time(acknowledged)</div>
-                        }
-                    </td>
-                    <td class="alarms__action">
-                        @if (alarm.AcknowledgedAt is null)
-                        {
-                            <button class="button" disabled="@_pending.Contains(alarm.Id)" @onclick="() => AcknowledgeAsync(alarm)">Acknowledge</button>
-                        }
-                    </td>
+                    <th>Alarm</th>
+                    <th>Raised</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var alarm in Alarms)
+                {
+                    <tr class="@(alarm.ClearedAt is null ? "is-open" : null)">
+                        @if (ShowMachine)
+                        {
+                            <td><a href="machines/@alarm.MachineId">@(Feed.Machine(alarm.MachineId)?.Name ?? alarm.MachineId)</a></td>
+                        }
+                        <td>
+                            <strong>@Display.Describe(alarm.Kind)</strong>
+                            <div class="muted">@alarm.Message</div>
+                        </td>
+                        <td>@Display.Time(alarm.RaisedAt)</td>
+                        <td>@Display.Duration((alarm.ClearedAt ?? DateTimeOffset.UtcNow) - alarm.RaisedAt)</td>
+                        <td>
+                            @if (alarm.ClearedAt is { } cleared)
+                            {
+                                <span>Cleared @Display.Time(cleared)</span>
+                            }
+                            else
+                            {
+                                <span class="status-open">Open</span>
+                            }
+                            @if (alarm.AcknowledgedAt is { } acknowledged)
+                            {
+                                <div class="muted">acknowledged @Display.Time(acknowledged)</div>
+                            }
+                        </td>
+                        <td class="alarms__action">
+                            @if (alarm.AcknowledgedAt is null)
+                            {
+                                <button class="button" disabled="@_pending.Contains(alarm.Id)" @onclick="() => AcknowledgeAsync(alarm)">Acknowledge</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {

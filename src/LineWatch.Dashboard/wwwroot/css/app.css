@@ -54,6 +54,7 @@ h2 { font-size: 1rem; margin: 0 0 .75rem; }
 
 .topbar nav a {
     color: #b9c4cf;
+    white-space: nowrap;
     padding: .35rem .7rem;
     border-radius: 6px;
 }
@@ -180,6 +181,7 @@ section.card + section.card { margin-top: 1rem; }
 
 /* Alarms */
 
+.table-scroll { overflow-x: auto; }
 .alarms { width: 100%; border-collapse: collapse; }
 .alarms th { text-align: left; font-size: .78rem; color: var(--muted); font-weight: 600; padding: .4rem .6rem; border-bottom: 1px solid var(--line); }
 .alarms td { padding: .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -209,7 +211,9 @@ section.card + section.card { margin-top: 1rem; }
     .topbar { flex-wrap: wrap; gap: .75rem; padding: .7rem 1rem; }
     .content { padding: 1rem; }
     .page-head--row { flex-direction: column; }
-    .alarms th:nth-child(4), .alarms td:nth-child(4) { display: none; }
+    .alarms { font-size: .9rem; }
+    .alarms td, .alarms th { padding: .5rem .4rem; }
+    .alarms__action { width: auto; }
 }
 
 /* Blazor loading and error UI */

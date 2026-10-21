@@ -1,0 +1,17 @@
+<span class="badge badge--@CssClass">@Text</span>
+
+@code {
+    [Parameter, EditorRequired] public MachineStatus Status { get; set; } = default!;
+
+    private string CssClass => !Status.Online ? "offline" : Status.Latest?.State.ToString().ToLowerInvariant() ?? "offline";
+
+    private string Text => !Status.Online
+        ? "Offline"
+        : Status.Latest?.State switch
+        {
+            MachineState.Running => "Running",
+            MachineState.Idle => "Idle",
+            MachineState.Fault => $"Fault {Status.Latest.FaultCode}",
+            _ => "Unknown",
+        };
+}

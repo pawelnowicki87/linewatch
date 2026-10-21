@@ -1,0 +1,49 @@
+<a class="card machine-card @(Status.Online ? "" : "machine-card--offline") @(Status.ActiveAlarms.Count > 0 ? "machine-card--alarm" : "")"
+   href="machines/@Status.Id">
+    <header class="machine-card__head">
+        <div>
+            <h2>@Status.Name</h2>
+            <span class="muted">@Status.Id</span>
+        </div>
+        <StateBadge Status="Status" />
+    </header>
+
+    @if (Status.Latest is { } reading)
+    {
+        <div class="machine-card__temperature @(reading.TemperatureC > Status.MaxTemperatureC ? "is-hot" : "")">
+            @Display.Temperature(reading.TemperatureC)
+            <span class="muted">limit @Display.Temperature(Status.MaxTemperatureC)</span>
+        </div>
+
+        <TrendChart Compact="true" Window="TimeSpan.FromMinutes(5)" Limit="Status.MaxTemperatureC"
+                    Points="Temperatures" Label="@($"{Status.Name} temperature, last 5 minutes")" />
+
+        <dl class="machine-card__stats">
+            <div><dt>Speed</dt><dd>@Display.Number(reading.SpeedRpm) rpm</dd></div>
+            <div><dt>Parts</dt><dd>@Display.Number(reading.PartCount)</dd></div>
+            <div><dt>Last reading</dt><dd>@Display.Time(reading.Timestamp)</dd></div>
+        </dl>
+    }
+    else
+    {
+        <p class="muted machine-card__empty">No reading yet</p>
+    }
+
+    @if (Status.ActiveAlarms.Count > 0)
+    {
+        <ul class="chips">
+            @foreach (var kind in Status.ActiveAlarms)
+            {
+                <li class="chip chip--alarm">@Display.Describe(kind)</li>
+            }
+        </ul>
+    }
+</a>
+
+@code {
+    [Parameter, EditorRequired] public MachineStatus Status { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyList<ReadingPoint> History { get; set; } = [];
+
+    private IReadOnlyList<(DateTimeOffset, double)> Temperatures =>
+        History.Select(p => (p.Timestamp, p.TemperatureC)).ToList();
+}

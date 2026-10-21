@@ -1,0 +1,46 @@
+@page "/"
+@implements IDisposable
+@inject TelemetryFeed Feed
+
+<PageTitle>Line overview | LineWatch</PageTitle>
+
+<div class="page-head">
+    <h1>Line overview</h1>
+    <p class="muted">@Summary</p>
+</div>
+
+@if (!Feed.Loaded)
+{
+    <p class="muted">Connecting to the line…</p>
+}
+else
+{
+    <section class="machine-grid">
+        @foreach (var machine in Feed.Machines)
+        {
+            <MachineCard Status="machine" History="Feed.History(machine.Id)" />
+        }
+    </section>
+}
+
+@code {
+    private string Summary
+    {
+        get
+        {
+            var machines = Feed.Machines;
+            var running = machines.Count(m => m.Online && m.Latest?.State == MachineState.Running);
+            return $"{running} of {machines.Count} machines running, {Feed.OpenUnacknowledged} unacknowledged alarms";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Feed.Changed += OnFeedChanged;
+        await Feed.StartAsync();
+    }
+
+    private void OnFeedChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+}

@@ -78,7 +78,7 @@ public sealed class ModbusPoller(
     private async Task PollOnceAsync(List<PolledMachine> machines, CancellationToken cancellationToken)
     {
         var readings = await Task.WhenAll(machines.Select(m => ReadAsync(m, cancellationToken)));
-        var now = time.GetUtcNow();
+        var now = time.GetUtcNowForDatabase();
 
         var changes = new List<AlarmChange>();
         for (var i = 0; i < machines.Count; i++)
@@ -110,7 +110,7 @@ public sealed class ModbusPoller(
         try
         {
             var registers = await machine.Connection.ReadRegistersAsync(cancellationToken);
-            return RegisterMap.Decode(endpoint.Id, time.GetUtcNow(), registers);
+            return RegisterMap.Decode(endpoint.Id, time.GetUtcNowForDatabase(), registers);
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {

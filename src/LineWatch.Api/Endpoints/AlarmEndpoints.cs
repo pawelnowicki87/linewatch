@@ -54,7 +54,7 @@ public static class AlarmEndpoints
         // Acknowledging twice keeps the first operator's timestamp.
         if (alarm.AcknowledgedAt is null)
         {
-            alarm.AcknowledgedAt = time.GetUtcNow();
+            alarm.AcknowledgedAt = time.GetUtcNowForDatabase();
             await db.SaveChangesAsync(cancellationToken);
             await hub.Clients.All.AlarmChanged(alarm.ToInfo());
         }

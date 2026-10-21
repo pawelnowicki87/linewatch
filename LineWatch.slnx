@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/LineWatch.Core/LineWatch.Core.csproj" />
+    <Project Path="src/LineWatch.Simulator/LineWatch.Simulator.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LineWatch.Core.Tests/LineWatch.Core.Tests.csproj" />

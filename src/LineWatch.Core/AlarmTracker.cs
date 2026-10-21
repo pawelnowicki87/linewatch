@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace LineWatch.Core;
@@ -41,11 +42,11 @@ public sealed class AlarmTracker(string machineId, AlarmLimits limits)
         // raising and clearing the alarm on every poll.
         if (reading.TemperatureC > limits.MaxTemperatureC)
             Raise(AlarmKind.HighTemperature,
-                $"Temperature {reading.TemperatureC:0.0} °C above limit {limits.MaxTemperatureC:0.0} °C",
+                Invariant($"Temperature {reading.TemperatureC:0.0} °C above limit {limits.MaxTemperatureC:0.0} °C"),
                 reading.Timestamp, changes);
         else if (reading.TemperatureC < limits.MaxTemperatureC - limits.HysteresisC)
             Clear(AlarmKind.HighTemperature,
-                $"Temperature back to {reading.TemperatureC:0.0} °C",
+                Invariant($"Temperature back to {reading.TemperatureC:0.0} °C"),
                 reading.Timestamp, changes);
 
         if (reading.State == MachineState.Fault)
@@ -66,6 +67,9 @@ public sealed class AlarmTracker(string machineId, AlarmLimits limits)
 
         return changes;
     }
+
+    // Messages are stored and shown as-is, so they must not depend on the server's culture.
+    private static string Invariant(FormattableString message) => message.ToString(CultureInfo.InvariantCulture);
 
     private void Raise(AlarmKind kind, string message, DateTimeOffset at, List<AlarmChange> changes)
     {

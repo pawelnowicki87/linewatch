@@ -1,3 +1,4 @@
+using System.Globalization;
 using LineWatch.Core;
 
 namespace LineWatch.Core.Tests;
@@ -74,6 +75,22 @@ public class AlarmTrackerTests
         Assert.False(change.Raised);
 
         Assert.Empty(_tracker.OnPollFailed(T0));
+    }
+
+    [Fact]
+    public void Messages_do_not_depend_on_the_server_culture()
+    {
+        var original = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("pl-PL");
+        try
+        {
+            var change = Assert.Single(_tracker.OnReading(Reading(201.5)));
+            Assert.Contains("201.5 °C", change.Message);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
     }
 
     [Fact]

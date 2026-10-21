@@ -38,7 +38,7 @@ else
 
     <section class="card chart-card">
         <h2>Speed, last 15 minutes</h2>
-        <TrendChart Points="History(p => p.SpeedRpm)" Unit="rpm"
+        <TrendChart Points="History(p => p.SpeedRpm)" Unit="rpm" StartAtZero="true"
                     Window="TelemetryFeed.HistoryWindow" Label="Speed over the last 15 minutes" />
     </section>
 

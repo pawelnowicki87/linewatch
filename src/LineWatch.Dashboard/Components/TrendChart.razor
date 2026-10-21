@@ -63,6 +63,8 @@
     [Parameter] public string Label { get; set; } = "";
     [Parameter] public string TickFormat { get; set; } = "0";
     [Parameter] public bool Compact { get; set; }
+    // For quantities like speed, where zero is meaningful and a few rpm of noise should look flat.
+    [Parameter] public bool StartAtZero { get; set; }
 
     private const double Size = 1000;
     // Keeps the line off the very top and bottom edge, where half of its stroke would be cut off.
@@ -88,6 +90,8 @@
         var values = visible.Select(p => p.Value).ToList();
         if (Limit is { } limit)
             values.Add(limit);
+        if (StartAtZero)
+            values.Add(0);
 
         var low = values.Count > 0 ? values.Min() : 0;
         var high = values.Count > 0 ? values.Max() : 1;

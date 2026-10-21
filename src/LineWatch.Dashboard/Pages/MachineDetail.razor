@@ -1,0 +1,70 @@
+@page "/machines/{Id}"
+@implements IDisposable
+@inject TelemetryFeed Feed
+
+<PageTitle>@(Machine?.Name ?? Id) | LineWatch</PageTitle>
+
+<a class="back" href="">← Line overview</a>
+
+@if (Machine is null)
+{
+    <p class="muted">@(Feed.Loaded ? $"There is no machine called {Id}." : "Connecting to the line…")</p>
+}
+else
+{
+    <div class="page-head page-head--row">
+        <div>
+            <h1>@Machine.Name</h1>
+            <p class="muted">@Machine.Id</p>
+        </div>
+        <StateBadge Status="Machine" />
+    </div>
+
+    @if (Machine.Latest is { } reading)
+    {
+        <dl class="stat-row">
+            <div class="card"><dt>Temperature</dt><dd>@Display.Temperature(reading.TemperatureC)</dd></div>
+            <div class="card"><dt>Speed</dt><dd>@Display.Number(reading.SpeedRpm) rpm</dd></div>
+            <div class="card"><dt>Parts made</dt><dd>@Display.Number(reading.PartCount)</dd></div>
+            <div class="card"><dt>Last reading</dt><dd>@Display.Time(reading.Timestamp)</dd></div>
+        </dl>
+    }
+
+    <section class="card chart-card">
+        <h2>Temperature, last 15 minutes</h2>
+        <TrendChart Points="History(p => p.TemperatureC)" Limit="Machine.MaxTemperatureC" Unit="°C"
+                    Window="TelemetryFeed.HistoryWindow" Label="Temperature over the last 15 minutes" />
+    </section>
+
+    <section class="card chart-card">
+        <h2>Speed, last 15 minutes</h2>
+        <TrendChart Points="History(p => p.SpeedRpm)" Unit="rpm"
+                    Window="TelemetryFeed.HistoryWindow" Label="Speed over the last 15 minutes" />
+    </section>
+
+    <section class="card">
+        <h2>Alarms</h2>
+        <AlarmTable Alarms="MachineAlarms" ShowMachine="false" />
+    </section>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    private MachineStatus? Machine => Feed.Machine(Id);
+
+    private IReadOnlyList<AlarmInfo> MachineAlarms => Feed.Alarms.Where(a => a.MachineId == Id).Take(20).ToList();
+
+    private IReadOnlyList<(DateTimeOffset, double)> History(Func<ReadingPoint, double> value) =>
+        Feed.History(Id).Select(p => (p.Timestamp, value(p))).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Feed.Changed += OnFeedChanged;
+        await Feed.StartAsync();
+    }
+
+    private void OnFeedChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Feed.Changed -= OnFeedChanged;
+}
